@@ -19,22 +19,31 @@ const int block_size = 256;  // CUDA maximum is 1024
 // matrix row-sum kernel
 __global__ void row_sums(const float *A, float *sums, size_t ds){
 
-  int idx = FIXME // create typical 1D thread index from built-in variables
+  int idx = threadIdx.x + blockIdx.x * blockDim.x; // create typical 1D thread index from built-in variables
   if (idx < ds){
     float sum = 0.0f;
     for (size_t i = 0; i < ds; i++)
-      sum += A[FIXME]         // write a for loop that will cause the thread to iterate across a row, keeeping a running sum, and write the result to sums
+      sum += A[idx * ds + i];         // write a for loop that will cause the thread to iterate across a row, keeeping a running sum, and write the result to sums
     sums[idx] = sum;
 }}
+
+'''
+Much better performance in column_sums because it takes advantage of coalescing. All of the threads are grabbing their row 1 item of their column at the same time.
+This means that on a cycle when 1 thread gets a contiguous cache line, there will be many threads after it that also want to access different 
+addresses on that same cache line. This decreases the total number of lines that have to be grabbed and increases bus utilization.
+
+In row_sums they are all trying to grab the column 1 item of their row, which with contiguous cache lines in a row major order matrix mean
+that each thread is grabbing a cache line that only they are using. This destroys bus utilization and requires #Rows cache lines to be brought in.
+'''
 
 // matrix column-sum kernel
 __global__ void column_sums(const float *A, float *sums, size_t ds){
 
-  int idx = FIXME // create typical 1D thread index from built-in variables
+  int idx = threadIdx.x + blockIdx.x * blockDim.x; // create typical 1D thread index from built-in variables
   if (idx < ds){
     float sum = 0.0f;
     for (size_t i = 0; i < ds; i++)
-      sum += A[FIXME]         // write a for loop that will cause the thread to iterate down a column, keeeping a running sum, and write the result to sums
+      sum += A[i * ds + idx];         // write a for loop that will cause the thread to iterate down a column, keeeping a running sum, and write the result to sums
     sums[idx] = sum;
 }}
 
@@ -54,7 +63,7 @@ int main(){
     h_A[i] = 1.0f;
     
   cudaMalloc(&d_A, DSIZE*DSIZE*sizeof(float));  // allocate device space for A
-  FIXME // allocate device space for vector d_sums
+  cudaMalloc(&d_sums, DSIZE*sizeof(float)); // allocate device space for vector d_sums
   cudaCheckErrors("cudaMalloc failure"); // error checking
     
   // copy matrix A to device:
