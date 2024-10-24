@@ -1,0 +1,35 @@
+Reductions:
+    N = ~8 million
+    atomic_red: 18.246 ms               99.1%
+    reduce_a: 87.939 micro s            0.5%
+    reduce_ws: 86.435 micro s           0.5%
+
+    N = 163840
+    atomic_red: 368.635 micro s         95.6%
+    reduce_a: 9.504 micro s             2.5%
+    reduce_ws: 6.881 micro s            1.8%
+
+    N = ~32 million
+    atomic_red: 73.211 ms               100%
+
+    redo without naive:
+    reduce_a: 334.667 micro s            50.1%
+    reduce_ws: 333.964 micro s           49.9%
+
+    The shared memory and warp shuffle approaches haves about the same performance for large values of N because they are both being bottlenecked by the atomic add.
+    As N gets larger and thus the number of blocks gets larger, the load on the atomic increases until it is taking up the majority of the time and then there will be
+    no visible difference between the 2 approaches.
+
+
+Matrix_sums
+    Original:
+        row_sum: 17.133 ms              86.0%
+        col_sum: 2.784 ms               14.0%
+
+    1 block per row with warp shuffling summing
+        row_sum: 2.778 ms               52.6%
+        col_sum: 2.501 ms               47.4%
+    
+    1 block per row with shared memory summing (given solution)
+        row_sum: 2.819 ms               52.8%
+        col_sum: 2.521 ms               47.2%
