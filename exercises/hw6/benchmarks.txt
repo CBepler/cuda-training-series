@@ -1,0 +1,22 @@
+Original:
+    inc: 810.460 microSeconds
+    memcpy Host-to-Device:  instances: 1      Time: 14.405 ms
+    memcpy Device-to-Host:  instances: 1      Time: 12.741 ms
+
+managed memory (no prefetch):
+    inc: 23.361 ms
+    memcpy Host-to-Device:  instances: 4964     Time: 14.974 ms
+    memcpy Device-to-Host:  instances: 768      Time: 10.733 ms
+
+managed memory (with prefetching):
+    inc: 797.755 microSeconds
+    memcpy Host-to-Device:  instances: 64      Time: 10.707 ms
+    memcpy Device-to-Host:  instances: 64      Time: 10.248 ms
+
+managed memory (10000 times):
+    inc: 7.891 s
+    memcpy Host-to-Device:  instances: 64      Time: 10.764 ms
+    memcpy Device-to-Host:  instances: 64      Time: 10.243 ms
+
+The memory only needs to be transferred once so it does not scale with number of runs (unless you use the memory in cpu between runs then it has to be transferred everytime
+and will scale). As long as the amount of time in the kernal is sufficiently large than memory operations can be trivial.
