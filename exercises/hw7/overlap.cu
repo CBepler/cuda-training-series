@@ -73,6 +73,7 @@ int main() {
     cudaStreamCreate(&streams[i]);
   }
   cudaCheckErrors("stream creation error");
+  
 
   gaussian_pdf<<<(ds + 255) / 256, 256>>>(d_x, d_y, 0.0, 1.0, ds); // warm-up
 
@@ -96,9 +97,11 @@ int main() {
 
   unsigned long long et = dtime_usec(0);
 
+  int chunkSize = ds/chunks;
   for (int i = 0; i < chunks; i++) { //depth-first launch
-    cudaMemcpyAsync(d_x + FIXME, h_x + FIXME, (FIXME) * sizeof(ft), cudaMemcpyHostToDevice, streams[FIXME]);
-    gaussian_pdf<<<((FIXME) + 255) / 256, 256, 0, streams[FIXME]>>>(d_x + FIXME, d_y + FIXME, 0.0, 1.0, FIXME);
+    int chunkOffset = chunkSize * i;
+    cudaMemcpyAsync(d_x + chunkOffset, h_x + chunkOffset, (chunkSize) * sizeof(ft), cudaMemcpyHostToDevice, streams[i % num_streams]);
+    gaussian_pdf<<<((chunkSize) + 255) / 256, 256, 0, streams[i % num_streams]>>>(d_x + chunkOffset, d_y + chunkOffset, 0.0, 1.0, chunkSize);
     cudaMemcpyAsync(h_y + i * (ds / chunks), d_y + i * (ds / chunks), (ds / chunks) * sizeof(ft), cudaMemcpyDeviceToHost, streams[i % num_streams]);
   }
   cudaDeviceSynchronize();
@@ -112,7 +115,7 @@ int main() {
       return -1;
     }
   }
-
+ 
   std::cout << "streams elapsed time: " << et/(float)USECPSEC << std::endl;
 #endif
 
