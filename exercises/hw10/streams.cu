@@ -70,6 +70,7 @@ int main() {
 
   cudaStream_t streams[num_streams];
   for (int i = 0; i < num_streams; i++) {
+    //setDevice(i % NUM_DEVICES);
     cudaStreamCreate(&streams[i]);
   }
   cudaCheckErrors("stream creation error");
@@ -97,6 +98,7 @@ int main() {
   unsigned long long et = dtime_usec(0);
 
   for (int i = 0; i < chunks; i++) { //depth-first launch
+    //setDevice(i % NUM_DEVICES);
     cudaMemcpyAsync(d_x + i * (ds / chunks), h_x + i * (ds / chunks), (ds / chunks) * sizeof(ft), cudaMemcpyHostToDevice, streams[i % num_streams]);
     gaussian_pdf<<<((ds / chunks) + 255) / 256, 256, 0, streams[i % num_streams]>>>(d_x + i * (ds / chunks), d_y + i * (ds / chunks), 0.0, 1.0, ds / chunks);
     cudaMemcpyAsync(h_y + i * (ds / chunks), d_y + i * (ds / chunks), (ds / chunks) * sizeof(ft), cudaMemcpyDeviceToHost, streams[i % num_streams]);
