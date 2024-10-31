@@ -124,8 +124,10 @@ void MatMul(const Matrix A, const Matrix B, Matrix C)
         // before starting the computation
         __syncthreads();
         // Multiply Asub and Bsub together
-        for (int e = 0; e <= BLOCK_SIZE; ++e)
+        for (int e = 0; e < BLOCK_SIZE; ++e)
             Cvalue += As[row][e] * Bs[e][col];
+
+        __syncthreads();
 
     }
 

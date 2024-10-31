@@ -16,15 +16,17 @@ __global__ void estimate_sum_ahs(size_t length, T *sum){
   __shared__ T smem[BLOCK_SIZE];
   size_t idx = blockDim.x*blockIdx.x+threadIdx.x;
   smem[threadIdx.x] = (idx < length)?ahs(idx):0;
+  if (idx == 0) smem[0] = 0;
 
   for (int i = blockDim.x>>1; i > 0; i >>= 1){
     __syncthreads();
-    if (threadIdx.x < i) smem[threadIdx.x] += smem[threadIdx.x+i];}
+    if (threadIdx.x < i) smem[threadIdx.x] += smem[threadIdx.x+i];
+  }
 
   if (threadIdx.x == 0) atomicAdd(sum, smem[0]);
 }
 
-typedef double ft;
+typedef float ft;
 
 int main(int argc, char* argv[]){
   size_t my_length = 1048576; // allow user to override default estimation length with command-line argument
